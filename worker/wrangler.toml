@@ -1,0 +1,18 @@
+name = "glossary-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "glossary-db"
+database_id = "a297d25c-cd89-4f29-853d-3308fa1ea62c"
+
+[[kv_namespaces]]
+binding = "GLOSSARY_CACHE"
+id = "0398736b4d064e16a2028817b9a299fa"
+
+[vars]
+CORS_ALLOWED_ORIGINS = "http://localhost:5173"
+
+[triggers]
+crons = ["0 * * * *"]   # retryQueue runs hourly
