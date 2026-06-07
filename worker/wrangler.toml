@@ -12,7 +12,9 @@ binding = "GLOSSARY_CACHE"
 id = "0398736b4d064e16a2028817b9a299fa"
 
 [vars]
-CORS_ALLOWED_ORIGINS = "http://localhost:5173"
+CORS_ALLOWED_ORIGINS = "https://glossary-worker.glossary-app.workers.dev/"
 
 [triggers]
 crons = ["0 * * * *"]   # retryQueue runs hourly
+workers_dev = true
+preview_urls = false
