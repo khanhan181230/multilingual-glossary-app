@@ -129,5 +129,7 @@ export interface Env {
   CORS_ALLOWED_ORIGINS:  string;   // comma-separated list of allowed origins
   SHEETS_API_KEY?:       string;   // Google Sheets API key (set as secret)
   SHEETS_SPREADSHEET_ID?: string;  // The Glossary_Master_DB spreadsheet ID
+  SHEETS_SCRIPT_URL?:      string;   // ← add this
+  SHEETS_SYNC_TOKEN?:      string;   // ← add this
   CF_ACCESS_CLIENT_ID?:  string;   // Cloudflare Access service token (optional)
 }

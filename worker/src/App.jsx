@@ -397,23 +397,81 @@ function WordModal({ tab, entry, onSave, onClose }) {
 }
 
 // ── Pagination Bar ─────────────────────────────────────────────────────────────
+// Shows: ‹ 1 2 3 … n-2 n-1 n ›  when totalPages > 6
+// Always shows first 3 and last 3, with ellipsis in between.
+// When current page is near the edges, no ellipsis needed.
 
 function PaginationBar({ currentPage, totalPages, accent, onPageChange }) {
   if (totalPages <= 1) return null;
+
+  const btnStyle = (active) => ({
+    width: 36, height: 36, borderRadius: 7,
+    border: `1.5px solid ${active ? accent : "#E0DBD5"}`,
+    background: active ? accent : "#fff",
+    color: active ? "#fff" : "#555",
+    fontWeight: active ? 700 : 500,
+    fontSize: 13, cursor: "pointer", flexShrink: 0,
+  });
+
+  const navStyle = (disabled) => ({
+    width: 36, height: 36, borderRadius: 7,
+    border: "1.5px solid #E0DBD5", background: "#fff",
+    color: disabled ? "#ccc" : "#555",
+    fontSize: 16, cursor: disabled ? "default" : "pointer", flexShrink: 0,
+  });
+
+  const dotStyle = {
+    width: 36, height: 36, display: "flex", alignItems: "center",
+    justifyContent: "center", fontSize: 13, color: "#bbb", flexShrink: 0,
+  };
+
+  // Build the page numbers to show
+  const getPages = () => {
+    if (totalPages <= 6) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const first = [1, 2, 3];
+    const last  = [totalPages - 2, totalPages - 1, totalPages];
+
+    // If current page is within or adjacent to first/last group — no ellipsis needed
+    const nearStart = currentPage <= 4;
+    const nearEnd   = currentPage >= totalPages - 3;
+
+    if (nearStart) {
+      // Show 1-5 … last 3
+      return [...new Set([1,2,3,4,5, "…end", ...last])];
+    }
+    if (nearEnd) {
+      // Show first 3 … last 5
+      return [...new Set([...first, "…start", totalPages-4, totalPages-3, totalPages-2, totalPages-1, totalPages])];
+    }
+    // Middle — show first 3 … current-1, current, current+1 … last 3
+    return [...first, "…start", currentPage - 1, currentPage, currentPage + 1, "…end", ...last];
+  };
+
+  const pages = getPages();
+
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 24, flexWrap: "wrap" }}>
-      <button onClick={() => onPageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1}
-        style={{ width: 36, height: 36, borderRadius: 7, border: "1.5px solid #E0DBD5", background: "#fff", color: currentPage === 1 ? "#ccc" : "#555", fontSize: 16, cursor: currentPage === 1 ? "default" : "pointer" }}>
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 5, marginTop: 24, flexWrap: "wrap" }}>
+      <button onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        disabled={currentPage === 1} style={navStyle(currentPage === 1)}>
         ‹
       </button>
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-        <button key={p} onClick={() => onPageChange(p)}
-          style={{ width: 36, height: 36, borderRadius: 7, border: `1.5px solid ${p === currentPage ? accent : "#E0DBD5"}`, background: p === currentPage ? accent : "#fff", color: p === currentPage ? "#fff" : "#555", fontWeight: p === currentPage ? 700 : 500, fontSize: 13, cursor: "pointer" }}>
-          {p}
-        </button>
-      ))}
-      <button onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}
-        style={{ width: 36, height: 36, borderRadius: 7, border: "1.5px solid #E0DBD5", background: "#fff", color: currentPage === totalPages ? "#ccc" : "#555", fontSize: 16, cursor: currentPage === totalPages ? "default" : "pointer" }}>
+
+      {pages.map((p, i) => {
+        if (p === "…start" || p === "…end") {
+          return <div key={`dot-${i}`} style={dotStyle}>…</div>;
+        }
+        return (
+          <button key={p} onClick={() => onPageChange(p)} style={btnStyle(p === currentPage)}>
+            {p}
+          </button>
+        );
+      })}
+
+      <button onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        disabled={currentPage === totalPages} style={navStyle(currentPage === totalPages)}>
         ›
       </button>
     </div>

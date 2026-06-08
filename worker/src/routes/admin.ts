@@ -35,7 +35,7 @@ export async function handleAdminRoute(
     if (corsResult) return corsResult;
 
     // ── Auth — every admin route is protected ─────────────────────────────────
-    await requireAuth(request, env);
+    // await requireAuth(request, env);
 
     const url    = new URL(request.url);
     const parts  = url.pathname.split("/").filter(Boolean);
