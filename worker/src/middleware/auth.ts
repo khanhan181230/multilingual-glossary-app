@@ -6,7 +6,7 @@ import { AppError, HTTP } from "./errorHandler";
 // Replace YOUR_TEAM_NAME with your Cloudflare Zero Trust team name.
 // Find it at: dash.cloudflare.com → Zero Trust → Settings → Custom Pages
 
-const JWKS_URL = "https://twilight-pine-27b6.cloudflareaccess.com/cdn-cgi/access/certs";
+const JWKS_URL = "twilight-pine-27b6.cloudflareaccess.com";
 
 // ── JWT structure ─────────────────────────────────────────────────────────────
 
