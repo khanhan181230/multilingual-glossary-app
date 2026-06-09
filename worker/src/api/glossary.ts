@@ -67,13 +67,23 @@ export interface UpdateWordPayload {
 
 async function apiFetch<T>(
   path:    string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  isAdmin  = false
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (isAdmin) {
+    headers["CF-Access-Client-Id"]     = import.meta.env.VITE_CF_CLIENT_ID;
+    headers["CF-Access-Client-Secret"] = import.meta.env.VITE_CF_CLIENT_SECRET;
+  }
+
   const res = await fetch(`${WORKER_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
+      ...headers,
+      ...(options.headers as Record<string, string> ?? {}),
     },
   });
 
@@ -117,7 +127,7 @@ export async function createWord(
   return apiFetch("/admin/words", {
     method: "POST",
     body:   JSON.stringify(payload),
-  });
+  }, true);  // ← add true
 }
 
 // ── PATCH /admin/words/:id ────────────────────────────────────────────────────
@@ -129,7 +139,7 @@ export async function updateWord(
   return apiFetch(`/admin/words/${word_id}`, {
     method: "PATCH",
     body:   JSON.stringify(payload),
-  });
+  }, true);  // ← add true
 }
 
 // ── DELETE /admin/words/:id ───────────────────────────────────────────────────
@@ -139,5 +149,5 @@ export async function deleteWord(
 ): Promise<{ success: true }> {
   return apiFetch(`/admin/words/${word_id}`, {
     method: "DELETE",
-  });
+  }, true);  // ← add true
 }

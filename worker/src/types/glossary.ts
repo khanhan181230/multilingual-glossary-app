@@ -132,4 +132,7 @@ export interface Env {
   SHEETS_SCRIPT_URL?:      string;   // ← add this
   SHEETS_SYNC_TOKEN?:      string;   // ← add this
   CF_ACCESS_CLIENT_ID?:  string;   // Cloudflare Access service token (optional)
+  CF_ACCESS_CLIENT_SECRET?: string; 
+  GOOGLE_SERVICE_ACCOUNT_EMAIL?:       string;
+  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?: string;
 }

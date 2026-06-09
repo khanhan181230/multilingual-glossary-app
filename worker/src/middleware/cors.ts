@@ -9,7 +9,7 @@ function buildCorsHeaders(origin: string): HeadersInit {
   return {
     "Access-Control-Allow-Origin":      origin,
     "Access-Control-Allow-Methods":     "GET, POST, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers":     "Content-Type, Authorization",
+    "Access-Control-Allow-Headers":     "Content-Type, Authorization, CF-Access-JWT-Assertion, CF-Access-Client-Id, CF-Access-Client-Secret",
     "Access-Control-Max-Age":           "86400", // preflight cache: 24 hours
   };
 }

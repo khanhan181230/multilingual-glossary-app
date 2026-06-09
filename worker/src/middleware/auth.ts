@@ -133,10 +133,17 @@ export async function requireAuth(
     throw new AppError(HTTP.UNAUTHORIZED, "Token has expired");
   }
 
-  // 4. Fetch the matching public key
+  // 4. Verify audience matches your Cloudflare Access application
+const aud = "388fb20bf7720f6dbee79cff0ccc922c906d7be8356577a25b5243529e39dd41";
+const audClaim = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+if (!audClaim.includes(aud)) {
+  throw new AppError(HTTP.UNAUTHORIZED, "Token audience mismatch");
+}
+
+  // 5. Fetch the matching public key
   const publicKey = await fetchPublicKey(header.kid);
 
-  // 5. Verify the signature — this is what blocks spoofed headers
+  // 6. Verify the signature — this is what blocks spoofed headers
   const valid = await verifySignature(raw, publicKey);
   if (!valid) {
     throw new AppError(HTTP.UNAUTHORIZED, "Token signature invalid");
