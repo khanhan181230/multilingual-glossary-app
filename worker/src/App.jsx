@@ -1,79 +1,48 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   fetchGlossaryPage,
   createWord,
   updateWord,
   deleteWord,
 } from "./api/glossary";
+import SunEditor from 'suneditor-react';
+import 'suneditor/dist/css/suneditor.min.css';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20];
 
 const TABS = [
-  { id: "it-japanese",      label: "IT Japanese",      sublabel: "ITジャパニーズ", accent: "#E07B4F", accentBg: "rgba(224,123,79,0.10)" },
-  { id: "advanced-chinese", label: "Advanced Chinese", sublabel: "高级中文",       accent: "#C0392B", accentBg: "rgba(192,57,43,0.09)" },
-  { id: "business-english", label: "Business English", sublabel: "Terminology",    accent: "#2471A3", accentBg: "rgba(36,113,163,0.10)" },
+  { id: "it-japanese",      label: "IT Japanese",      sublabel: "ITジャパニーズ", accent: "#F8A39D", accentBg: "rgba(249,179,175,0.12)" },
+  { id: "advanced-chinese", label: "Advanced Chinese", sublabel: "高级中文",       accent: "#E47F7A", accentBg: "rgba(232,146,141,0.12)" },
+  { id: "business-english", label: "Business English", sublabel: "Terminology",    accent: "#CF5F59", accentBg: "rgba(212,112,107,0.12)" },
 ];
 
 const TAG_COLORS = {
-  infrastructure: "#4A7FA5", network: "#3D8B74", data: "#7B68AA", storage: "#6B8E5E",
-  security: "#C0392B", design: "#D4854A", ux: "#C9A227", cloud: "#2E86C1",
-  programming: "#7D3C98", cs: "#6C5B7B", systems: "#4A6741", performance: "#A04000",
-  devops: "#1A5276", finance: "#1E8449", metrics: "#7E5109", strategy: "#2E4057",
-  management: "#4A235A", communication: "#1B4332", legal: "#7B3F00",
-  "client-facing": "#2E7D6B", product: "#5D4037",
+  infrastructure: "#7B9EC2", network: "#5BA08A",    data: "#9B8EC4",
+  storage:        "#7A9E6E", security: "#C47A7A",   design: "#C49A6A",
+  ux:             "#C4A93A", cloud:    "#5A9EC4",   programming: "#9A6AC4",
+  cs:             "#8A7A9B", systems:  "#6A8A5A",   performance: "#B46A3A",
+  devops:         "#4A7AA6", finance:  "#5A9A6A",   metrics:     "#9A7A3A",
+  strategy:       "#4A607A", management: "#6A4A7A", communication: "#3A6A5A",
+  legal:          "#8A6A3A", "client-facing": "#4A9A8A", product: "#7A5A4A",
 };
 
 // ── Responsive styles helper ──────────────────────────────────────────────────
 
 const isMobile = () => window.innerWidth < 480;
 
-// ── Rich Text Toolbar ──────────────────────────────────────────────────────────
-
-function RichToolbar({ editorRef }) {
-  const exec = (cmd) => { editorRef.current?.focus(); document.execCommand(cmd, false, null); };
-  const btn = (label, cmd, extra = {}) => (
-    <button onMouseDown={e => { e.preventDefault(); exec(cmd); }}
-      style={{ background: "none", border: "1px solid #E0DBD5", borderRadius: 5, cursor: "pointer", padding: "4px 9px", fontSize: 13, color: "#444", lineHeight: 1.4, ...extra }}>
-      {label}
-    </button>
-  );
-  return (
-    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", padding: "8px 0 10px", borderBottom: "1px solid #F0ECE8", marginBottom: 10 }}>
-      {btn("B", "bold", { fontWeight: 700 })}
-      {btn("I", "italic", { fontStyle: "italic" })}
-      {btn("U", "underline", { textDecoration: "underline" })}
-      <div style={{ width: 1, background: "#E0DBD5", margin: "0 3px" }} />
-      {btn("• List", "insertUnorderedList")}
-      {btn("1. List", "insertOrderedList")}
-      <div style={{ width: 1, background: "#E0DBD5", margin: "0 3px" }} />
-      {btn("Clear", "removeFormat", { color: "#aaa" })}
-    </div>
-  );
-}
-
 // ── Detail Modal ───────────────────────────────────────────────────────────────
 
 function DetailModal({ entry, accent, onClose, onSave }) {
   const [editing, setEditing] = useState(!entry.detail);
-  const [draft, setDraft] = useState(entry.detail || "");
-  const [saving, setSaving] = useState(false);
-  const editorRef = useRef(null);
-
-  useEffect(() => {
-    if (editing && editorRef.current) {
-      editorRef.current.innerHTML = draft;
-      editorRef.current.focus();
-    }
-  }, [editing]);
+  const [draft, setDraft]     = useState(entry.detail || "");
+  const [saving, setSaving]   = useState(false);
 
   const handleSave = async () => {
-    const html = (editorRef.current?.innerHTML || "").trim();
     setSaving(true);
     try {
-      await onSave(entry.word_id, html);
-      setDraft(html);
+      await onSave(entry.word_id, draft);
       setEditing(false);
     } finally {
       setSaving(false);
@@ -81,20 +50,27 @@ function DetailModal({ entry, accent, onClose, onSave }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div style={{ background: "#fff", borderRadius: 14, width: "90vw", maxWidth: 580, maxHeight: "85vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 64px rgba(0,0,0,0.18)", overflow: "hidden" }}>
+
+        {/* Header */}
         <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid #F0ECE8", display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexShrink: 0 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 18, fontFamily: "'Noto Serif', Georgia, serif", fontWeight: 700 }}>{entry.term}</span>
+              <span style={{ fontSize: 18, fontFamily: "'Noto Serif JP', Georgia, serif", fontWeight: 700 }}>{entry.term}</span>
               <span style={{ fontSize: 12, color: "#aaa", fontStyle: "italic" }}>{entry.reading}</span>
             </div>
             <p style={{ margin: "3px 0 0", fontSize: 11, color: "#aaa", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em" }}>Detail notes</p>
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             {!editing && (
-              <button onClick={() => setEditing(true)} style={{ background: "#F5F2EF", border: "none", borderRadius: 7, cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", gap: 5, color: "#666", fontSize: 13, fontWeight: 600 }}>
+              <button
+                onClick={() => setEditing(true)}
+                style={{ background: "#F5F2EF", border: "none", borderRadius: 7, cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", gap: 5, color: "#666", fontSize: 13, fontWeight: 600 }}
+              >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -105,27 +81,49 @@ function DetailModal({ entry, accent, onClose, onSave }) {
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: "#bbb", padding: "2px 4px" }}>✕</button>
           </div>
         </div>
+
+        {/* Body */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px 20px" }}>
           {editing ? (
             <>
-              <RichToolbar editorRef={editorRef} />
-              <div ref={editorRef} contentEditable suppressContentEditableWarning
-                style={{ minHeight: 180, outline: "none", fontSize: 14, color: "#333", lineHeight: 1.75, caretColor: accent }} />
+              <SunEditor
+                setContents={draft}
+                onChange={(content) => setDraft(content)}
+                setOptions={{
+                  height: 220,
+                  buttonList: [
+                    ["bold", "italic", "underline", "strike"],
+                    ["blockquote", "list", "align"],
+                    ["link"],
+                    ["formatBlock"],
+                    ["undo", "redo"],
+                  ],
+                }}
+              />
               <div style={{ display: "flex", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid #F0ECE8" }}>
-                <button onClick={handleSave} disabled={saving}
-                  style={{ flex: 1, background: saving ? "#aaa" : accent, color: "#fff", border: "none", borderRadius: 8, padding: "10px 0", fontWeight: 700, fontSize: 14, cursor: saving ? "default" : "pointer" }}>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  style={{ flex: 1, background: saving ? "#aaa" : accent, color: "#fff", border: "none", borderRadius: 8, padding: "10px 0", fontWeight: 700, fontSize: 14, cursor: saving ? "default" : "pointer" }}
+                >
                   {saving ? "Saving…" : "Save"}
                 </button>
-                <button onClick={() => entry.detail ? setEditing(false) : onClose()}
-                  style={{ flex: 1, background: "#F5F2EF", color: "#555", border: "none", borderRadius: 8, padding: "10px 0", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>
+                <button
+                  onClick={() => entry.detail ? setEditing(false) : onClose()}
+                  style={{ flex: 1, background: "#F5F2EF", color: "#555", border: "none", borderRadius: 8, padding: "10px 0", fontWeight: 600, fontSize: 14, cursor: "pointer" }}
+                >
                   Cancel
                 </button>
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 14, color: "#333", lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: draft }} />
+            <div
+              style={{ fontSize: 14, color: "#333", lineHeight: 1.8 }}
+              dangerouslySetInnerHTML={{ __html: draft }}
+            />
           )}
         </div>
+
       </div>
     </div>
   );
@@ -236,12 +234,12 @@ function GlossaryCard({ entry, accent, accentBg, activeTab, onDetailSave, onEdit
         {expanded && (
           <div style={{ marginTop: 14, borderTop: "1px solid #F0ECE8", paddingTop: 14 }}>
             {entry.definition && (
-              <p style={{ fontSize: 14, color: "#444", lineHeight: 1.65, margin: "0 0 10px" }}>{entry.definition}</p>
+              <p style={{ fontSize: 14, color: "var(--text-primary)", lineHeight: 1.65, margin: "0 0 10px" }}>{entry.definition}</p>
             )}
             {entry.example && (
-              <div style={{ background: "#F9F6F3", borderLeft: `3px solid ${accent}`, borderRadius: "0 6px 6px 0", padding: "8px 12px", marginBottom: 12 }}>
+              <div style={{ background: "var(--bg-card)", borderLeft: `3px solid ${accent}`, borderRadius: "0 6px 6px 0", padding: "8px 12px", marginBottom: 12 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: accent, textTransform: "uppercase", letterSpacing: "0.06em" }}>Example</span>
-                <p style={{ fontSize: 13, color: "#555", margin: "4px 0 0", fontStyle: "italic", lineHeight: 1.6 }}>{entry.example}</p>
+                <p style={{ fontSize: 13, color: "var(--text-primary)", margin: "4px 0 0", fontStyle: "italic", lineHeight: 1.6 }}>{entry.example}</p>
               </div>
             )}
 
@@ -253,7 +251,7 @@ function GlossaryCard({ entry, accent, accentBg, activeTab, onDetailSave, onEdit
             )}
 
             {/* Detail trigger */}
-            <div style={{ borderTop: "1px solid #F0ECE8", paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
               <div>
                 {hasDetail ? (
                   <button onClick={e => { e.stopPropagation(); setShowDetail(true); }}
@@ -271,11 +269,11 @@ function GlossaryCard({ entry, accent, accentBg, activeTab, onDetailSave, onEdit
               {/* Edit / Delete buttons */}
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={e => { e.stopPropagation(); onEdit(entry); }}
-                  style={{ background: "#F5F2EF", border: "none", borderRadius: 7, cursor: "pointer", padding: "5px 12px", fontSize: 12, fontWeight: 600, color: "#555" }}>
+                  style={{ background: "var(--bg-card)", border: "none", borderRadius: 7, cursor: "pointer", padding: "5px 12px", fontSize: 12, fontWeight: 600, color: "#555" }}>
                   Edit
                 </button>
                 <button onClick={e => { e.stopPropagation(); onDelete(entry); }}
-                  style={{ background: "#FEF2F2", border: "none", borderRadius: 7, cursor: "pointer", padding: "5px 12px", fontSize: 12, fontWeight: 600, color: "#e74c3c" }}>
+                  style={{ background: "var(--bg-card)", border: "none", borderRadius: 7, cursor: "pointer", padding: "5px 12px", fontSize: 12, fontWeight: 600, color: "#e74c3c" }}>
                   Delete
                 </button>
               </div>
@@ -493,7 +491,16 @@ export default function GlossaryApp() {
   const [editEntry, setEditEntry]     = useState(null);
   const [deleteEntry, setDeleteEntry] = useState(null);
 
-  const tab = TABS.find(t => t.id === activeTab);
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
+
+   const tab = TABS.find(t => t.id === activeTab);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   // ── Fetch data ───────────────────────────────────────────────────────────────
 
@@ -547,8 +554,8 @@ export default function GlossaryApp() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F7F4F1", fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Serif+JP&family=Noto+Serif+SC&display=swap" rel="stylesheet" />
+    <div style={{ minHeight: "100vh", background: "#F7F4F1", fontFamily: "'Noto Sans', 'Noto Sans JP', 'Noto Sans SC', 'Helvetica Neue', sans-serif" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+JP&family=Noto+Serif+SC&display=swap" rel="stylesheet" />
 
       {/* Header */}
       <div style={{ background: "#1C1C1E", padding: "28px 16px 0" }}>
@@ -557,7 +564,14 @@ export default function GlossaryApp() {
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#F5F0EA", letterSpacing: "-0.02em" }}>Lexicon</h1>
             <span style={{ fontSize: 12, color: "#777", fontWeight: 500 }}>Multilingual Glossary</span>
           </div>
-          <p style={{ margin: "0 0 20px", fontSize: 13, color: "#888" }}>IT · Business · Language</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+            <p style={{ margin: 0, fontSize: 13, color: "#888" }}>IT · Business · Language</p>
+            <button
+              onClick={() => setTheme(t => t === "light" ? "dark" : "light")}
+              style={{ background: "none", border: "1px solid #3a3a3a", borderRadius: 7, cursor: "pointer", padding: "4px 12px", fontSize: 12, color: "#888", letterSpacing: "0.03em" }}>
+              {theme === "light" ? "🌙 Dark" : "☀️ Light"}
+            </button>
+          </div>
 
           {/* Tabs — horizontal scroll on mobile */}
           <div style={{ display: "flex", gap: 2, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>

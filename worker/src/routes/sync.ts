@@ -27,7 +27,12 @@ export async function handleSyncRoute(
     if (corsResult) return corsResult;
 
     // ── Auth ──────────────────────────────────────────────────────────────────
-    await requireAuth(request, env);
+    const syncToken = request.headers.get("X-Sync-Token");
+    const bodyToken = (await request.clone().json() as { token?: string }).token;
+
+    if (syncToken !== env.SHEETS_SYNC_TOKEN && bodyToken !== env.SHEETS_SYNC_TOKEN) {
+      await requireAuth(request, env);
+    }
 
     if (request.method !== "POST") {
       throw new AppError(HTTP.BAD_REQUEST, "Method not allowed");

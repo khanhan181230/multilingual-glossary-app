@@ -4,10 +4,78 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>my-glossary-app</title>
+    <title>Lexicon</title>
+    <style>
+  :root {
+    /* Light theme */
+    --accent:          #e96365;
+    --accent-hover:    #d85355;
+    --accent-bg:       rgba(220, 149, 145, 0.12);
+    --accent-text:     #c34749;
+
+    --bg-primary:      #F7F4F1;
+    --bg-secondary:    #FFFFFF;
+    --bg-header:       #1C1C1E;
+    --bg-card:         #FFFFFF;
+    --bg-input:        #FFFFFF;
+
+    --text-primary:    #1a1a1a;
+    --text-secondary:  #444444;
+    --text-muted:      #888888;
+    --text-placeholder:#AAAAAA;
+
+    --border:          #E8E4DF;
+    --border-input:    #E0DBD5;
+    --border-focus:    #f9b3af;
+
+    --tag-bg:          rgba(249,179,175,0.10);
+    --shadow-card:     0 4px 20px rgba(0,0,0,0.07);
+  }
+
+  [data-theme="dark"] {
+    --accent:          #f9b3af;
+    --accent-hover:    #f79e99;
+    --accent-bg:       rgba(249,179,175,0.10);
+    --accent-text:     #f9b3af;
+
+    --bg-primary:      #0f0f0f;
+    --bg-secondary:    #1a1a1a;
+    --bg-header:       #080808;
+    --bg-card:         #1e1e1e;
+    --bg-input:        #1e1e1e;
+
+    --text-primary:    #F0EBE8;
+    --text-secondary:  #B0A8A4;
+    --text-muted:      #666666;
+    --text-placeholder:#555555;
+
+    --border:          #2C2826;
+    --border-input:    #3A3532;
+    --border-focus:    #f9b3af;
+
+    --tag-bg:          rgba(249,179,175,0.08);
+    --shadow-card:     0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background 0.2s, color 0.2s;
+  }
+    /* Override card backgrounds */
+  [data-theme="dark"] .card-bg {
+    background: var(--bg-card) !important;
+    border-color: var(--border) !important;
+    color: var(--text-primary) !important;
+  }
+</style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="worker/src/main.jsx"></script>
   </body>
 </html>
+
