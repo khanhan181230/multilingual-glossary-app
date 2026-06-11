@@ -5,7 +5,8 @@
 // This script fetches all rows from your Apps Script endpoint and
 // upserts them into D1 via the Worker sync endpoint.
 // Only needed for the initial data load — after this, sync runs automatically.
-
+import { execSync } from "child_process";
+import { writeFileSync, unlinkSync } from "fs";
 const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbxO0vt5YtlKxNrf8-as2IfVK0365-sWbU9Nf28bn3COHdSZOnBgWtx5Vp40UX8xTS0/exec";
 const SYNC_TOKEN  = "glossary_sync_2026_k9x$mP";
 const WORKER_URL  = "https://glossary-worker.glossary-app.workers.dev";
@@ -54,8 +55,6 @@ function rowToSQL(row) {
 }
 
 async function main() {
-  const { execSync } = await import("child_process");
-  const { writeFileSync, unlinkSync } = await import("fs");
 
   const rows = await fetchSheetData();
   console.log(`✅ Fetched ${rows.length} rows from Sheets`);
@@ -92,3 +91,40 @@ main().catch(err => {
   console.error("❌ Seed failed:", err.message);
   process.exit(1);
 });
+
+
+// ── Seed tags ─────────────────────────────────────────────────────────────────
+const TAGS = [
+  ["infrastructure","Technical","#7B9EC2","Server, cloud, and system infrastructure topics"],
+  ["network","Technical","#5BA08A","Networking, protocols, and connectivity"],
+  ["data","Technical","#9B8EC4","Data storage, retrieval, and management"],
+  ["storage","Technical","#7A9E6E","File systems, databases, and persistence layers"],
+  ["security","Technical","#C47A7A","Authentication, encryption, and access control"],
+  ["design","Technical","#C49A6A","Software and system design patterns"],
+  ["ux","Technical","#C4A93A","User experience and interface design"],
+  ["cloud","Technical","#5A9EC4","Cloud computing platforms and services"],
+  ["programming","Technical","#9A6AC4","General programming and software development"],
+  ["cs","Technical","#8A7A9B","Computer science fundamentals and theory"],
+  ["systems","Technical","#6A8A5A","Systems architecture and engineering"],
+  ["performance","Technical","#B46A3A","Optimisation, speed, and efficiency"],
+  ["devops","Technical","#4A7AA6","Development operations and deployment practices"],
+  ["client-facing","Process","#4A9A8A","Work and deliverables directly involving clients"],
+  ["finance","Business","#5A9A6A","Financial metrics, modelling, and strategy"],
+  ["metrics","Business","#9A7A3A","Measurement, KPIs, and performance tracking"],
+  ["strategy","Business","#4A607A","Business strategy and planning"],
+  ["management","Business","#6A4A7A","Team and project management"],
+  ["communication","Business","#3A6A5A","Business communication and stakeholder relations"],
+  ["legal","Business","#8A6A3A","Legal, compliance, and contractual topics"],
+  ["product","Business","#7A5A4A","Product management and development lifecycle"],
+];
+
+console.log("\n📤 Seeding tags...");
+const tagSQL = TAGS.map(([tag, category, color_hex, description]) =>
+  `INSERT INTO tags (tag, category, color_hex, description) VALUES ('${tag}', '${category}', '${color_hex}', '${description}') ON CONFLICT (tag) DO UPDATE SET category=excluded.category, color_hex=excluded.color_hex, description=excluded.description;`
+).join("\n");
+
+const tagFile = "/tmp/seed_tags.sql";
+writeFileSync(tagFile, tagSQL);
+execSync(`cd worker && npx wrangler d1 execute glossary-db --file=${tagFile} --remote`, { stdio: "inherit" });
+unlinkSync(tagFile);
+console.log("✅ Tags seeded");

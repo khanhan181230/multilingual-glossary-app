@@ -59,6 +59,12 @@ export async function handleSyncRoute(
       throw new AppError(HTTP.BAD_REQUEST, "Field 'rows' must be a non-empty array");
     }
 
+    // ── Map 'id' from sheet to 'word_id' for D1 ──────────────────────────────
+    const mappedRows = rows.map((row: any) => ({
+      ...row,
+      word_id: row.word_id ?? row.id,
+    }));
+
     // ── Upsert rows into D1 ───────────────────────────────────────────────────
     // Uses INSERT OR REPLACE so re-running the sync is always safe.
     // Sheets is source of truth — its data overwrites D1 on conflict.
@@ -68,7 +74,7 @@ export async function handleSyncRoute(
       const now = new Date().toISOString();
 
       // Batch upserts using D1 batch API for performance
-      const statements = rows.map((row) =>
+      const statements = mappedRows.map((row) =>
         env.DB.prepare(`
           INSERT INTO glossary (
             word_id, tab_id, term, reading,
@@ -114,7 +120,7 @@ export async function handleSyncRoute(
       );
 
       await env.DB.batch(statements);
-      rowsAffected = rows.length;
+      rowsAffected = mappedRows.length;
 
       // ── Invalidate KV cache for this tab ──────────────────────────────────
       await invalidateTab(env, tab_id);

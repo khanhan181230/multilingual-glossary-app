@@ -4,6 +4,7 @@ import { handleAdminRoute } from "./routes/admin";
 import { handleSyncRoute } from "./routes/sync";
 import { flushRetryQueue } from "./services/retryQueue";
 import { errorResponse, HTTP } from "./middleware/errorHandler";
+import { handleTagsRoute } from "./routes/tags";
 
 export default {
   // ── HTTP handler ─────────────────────────────────────────────────────────────
@@ -57,6 +58,11 @@ export default {
         return await handleSyncRoute(request, env);
       }
 
+      // Inside fetch handler, add before the 404:
+      if (pathname.startsWith("/tags")) {
+        return await handleTagsRoute(request, env);
+      }
+      
       // No route matched
       return errorResponse(HTTP.NOT_FOUND, "Route not found");
 

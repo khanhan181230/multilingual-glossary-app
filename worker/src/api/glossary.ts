@@ -28,6 +28,20 @@ export interface GlossaryEntry {
   origin:         "sheet" | "ui";
 }
 
+// ── GET /tags ─────────────────────────────────────────────────────────────────
+
+export interface TagEntry {
+  tag:         string;
+  category:    string;
+  color_hex:   string;
+  description: string | null;
+}
+
+export async function fetchTags(): Promise<TagEntry[]> {
+  return apiFetch<{ data: TagEntry[] }>("/tags").then(r => r.data);
+}
+
+
 export interface PaginatedResponse {
   data:        GlossaryEntry[];
   page:        number;

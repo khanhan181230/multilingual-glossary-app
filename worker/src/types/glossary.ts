@@ -136,3 +136,10 @@ export interface Env {
   GOOGLE_SERVICE_ACCOUNT_EMAIL?:       string;
   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?: string;
 }
+
+export interface TagEntry {
+  tag:         string;
+  category:    string;
+  color_hex:   string;
+  description: string | null;
+}

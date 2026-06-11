@@ -8,6 +8,7 @@ import type {
   PendingSyncEntry,
   SyncOperation,
   MAX_PAGE_SIZE,
+  TagEntry,
 } from "../types/glossary";
 import { MAX_PAGE_SIZE as PAGE_CAP, DEFAULT_PAGE_SIZE } from "../types/glossary";
 import { AppError, HTTP } from "../middleware/errorHandler";
@@ -299,4 +300,32 @@ export async function logSync(
       (last_synced_at, sync_method, tab_id, rows_affected, status, error_message)
     VALUES (?, ?, ?, ?, ?, ?)
   `).bind(now, sync_method, tab_id, rows_affected, status, error_message).run();
+}
+
+
+// ── Tag queries ────────────────────────────────────────────────────────────────
+
+export async function queryAllTags(env: Env): Promise<TagEntry[]> {
+  const result = await env.DB
+    .prepare("SELECT * FROM tags ORDER BY category ASC, tag ASC")
+    .all<TagEntry>();
+  return result.results ?? [];
+}
+
+export async function upsertTags(
+  env:  Env,
+  tags: TagEntry[]
+): Promise<void> {
+  if (tags.length === 0) return;
+  const statements = tags.map(t =>
+    env.DB.prepare(`
+      INSERT INTO tags (tag, category, color_hex, description)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT (tag) DO UPDATE SET
+        category    = excluded.category,
+        color_hex   = excluded.color_hex,
+        description = excluded.description
+    `).bind(t.tag, t.category, t.color_hex, t.description ?? null)
+  );
+  await env.DB.batch(statements);
 }
