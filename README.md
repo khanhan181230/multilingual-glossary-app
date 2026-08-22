@@ -5,7 +5,8 @@ A glossary web app for cross-border software teams, built to keep technical term
 **Live demo → https://multilingual-glossary-app.vercel.app/**
 
 <!-- Chèn ảnh chụp màn hình ở đây. Lưu file vào /public/screenshot.png -->
-public/screenshot.png
+<img width="2212" height="1958" alt="image" src="https://github.com/user-attachments/assets/7e02c82c-1f0c-464d-8df3-dd2cebdf151d" />
+
 
 ---
 
