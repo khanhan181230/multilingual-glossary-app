@@ -31,8 +31,30 @@ export async function queryGlossaryPage(
   let params:     (string | number)[];
 
   if (search && search.trim()) {
-    // Search across term, definition, and tags using indexed columns
-    const q = `%${search.trim()}%`;
+  const raw = search.trim();
+
+  if (raw.startsWith("tag:")) {
+    // Exact tag match — comma-wrapping prevents partial token collisions
+    const tagName    = raw.slice(4).trim().toLowerCase();
+    const tagPattern = `%,${tagName},%`;
+    countQuery = `
+      SELECT COUNT(*) as total
+      FROM glossary
+      WHERE tab_id = ?
+        AND (',' || LOWER(tags) || ',') LIKE ?
+    `;
+    dataQuery = `
+      SELECT *
+      FROM glossary
+      WHERE tab_id = ?
+        AND (',' || LOWER(tags) || ',') LIKE ?
+      ORDER BY word_id ASC
+      LIMIT ? OFFSET ?
+    `;
+    params = [tab_id, tagPattern];
+  } else {
+    // Existing fuzzy behaviour — unchanged
+    const q = `%${raw}%`;
     countQuery = `
       SELECT COUNT(*) as total
       FROM glossary
@@ -48,6 +70,7 @@ export async function queryGlossaryPage(
       LIMIT ? OFFSET ?
     `;
     params = [tab_id, q, q, q];
+  }
   } else {
     countQuery = `
       SELECT COUNT(*) as total
